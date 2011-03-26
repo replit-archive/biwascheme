@@ -3,6 +3,8 @@ BiwaScheme
 
 BiwaScheme is a Scheme interpreter written in JavaScript.
 
+Modularity-oriented fork for use by jsREPL.
+
 Demos
 -----
 
@@ -60,7 +62,7 @@ Prerequisites:
 
 * make
 * sed
-* Java (to run YUI Compressor)
+* yui-compressor
 
 License
 =======

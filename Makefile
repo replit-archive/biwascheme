@@ -47,22 +47,22 @@ VERSION_FILE    = src/version.js
 all: folder lib/biwascheme.js lib/release_biwascheme.js lib/console_biwascheme.js
 
 folder:
-	mkdir -p lib
+	@mkdir -p lib
 
 $(VERSION_FILE): $(VERSION_FILE_IN) $(RELEASE_FILES) $(CONSOLE_FILES) Makefile
 	cat $< | sed -e "s/@GIT_COMMIT@/`git log -1 --pretty=format:%H`/" | sed -e "s/@VERSION@/`cat VERSION`/" > $@
 
 lib/biwascheme.js: $(VERSION_FILE) $(CORE_FILES)
-	cat $^ | java -jar bin/yuicompressor-2.4.2.jar --type js -o $@
+	cat $^ | yui-compressor --type js -o $@
 	@echo "Wrote " $@
 
 lib/release_biwascheme.js: $(VERSION_FILE) $(CORE_FILES)
-	cat $^ | java -jar bin/yuicompressor-2.4.2.jar --type js -o $@
+	cat $^ | yui-compressor --type js -o $@
 	@echo "Wrote " $@
 
 lib/console_biwascheme.js: $(VERSION_FILE) $(CORE_FILES)
-	cat $^ | java -jar bin/yuicompressor-2.4.2.jar --type js -o $@
+	cat $^ | yui-compressor --type js -o $@
 	@echo "Wrote " $@
 
 clean:
-	rm $(VERSION_FILE) lib/biwascheme.js lib/release_biwascheme.js lib/console_biwascheme.js
+	rm -f $(VERSION_FILE) lib/biwascheme.js lib/release_biwascheme.js lib/console_biwascheme.js
