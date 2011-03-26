@@ -9,9 +9,9 @@ if(typeof(WScript) == 'object'){
   eval("window = {}; navigator = {};");
 
   Console = {}
-  Console.puts = function(str, no_newline) {
-      WScript.Echo(str);
-  }
+  BiwaScheme.Port.current_output = new BiwaScheme.Port.CusomOutput(function(s) {
+    WScript.Echo(s);
+  });
   Console.p = function(/*ARGS*/) {
       WScript.Echo.apply(this, arguments);
   }
@@ -19,6 +19,8 @@ if(typeof(WScript) == 'object'){
   eval(read("../lib/stackbase.js"));
   eval(read("../lib/r6rs_lib.js"));
   eval("function ev(str){ "+
-        "try{ puts(str); return (new BiwaScheme.Interpreter()).evaluate(str); }"+
-        "catch(e){ puts('(function ev:exception raised) '+e.message); } }");
+        "try{ BiwaScheme.Port.current_output.put_string(str); "+
+        " return (new BiwaScheme.Interpreter()).evaluate(str); }"+
+        "catch(e){ BiwaScheme.Port.current_output.put_string"+
+        "('(function ev:exception raised) '+e.message); } }");
 }

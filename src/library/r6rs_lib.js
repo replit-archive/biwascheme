@@ -2443,7 +2443,7 @@ if( typeof(BiwaScheme)!='object' ) BiwaScheme={}; with(BiwaScheme) {
     var deleted = FileIO.unlink(FileIO.open(ar[0]));
     if(!deleted){
       //TODO: raise %i/o-filename if not found or not deletable
-      puts("delete-file: cannot delete " + ar[0]);
+      throw new Error("delete-file: cannot delete " + ar[0]);
     }
     return BiwaScheme.undef;
   });

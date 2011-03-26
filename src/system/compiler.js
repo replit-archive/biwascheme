@@ -22,7 +22,7 @@ BiwaScheme.Compiler = Class.create({
     for(var i=0; i<arr.length; i++){
       opc = this.compile_refer(arr[i], e, ["argument", opc]);
     }
-    //puts("collect_free "+free.inspect()+" / "+e.inspect()+" => "+opc.inspect());
+    //console.log("collect_free "+free.inspect()+" / "+e.inspect()+" => "+opc.inspect());
     return opc;
   },
 
@@ -39,11 +39,11 @@ BiwaScheme.Compiler = Class.create({
   compile_lookup: function(x, e, return_local, return_free, return_global){
     var locals = e[0], free = e[1];
     if((n = locals.index(x)) != null){
-      //puts("compile_refer:"+x.inspect()+" in "+e.inspect()+" results refer-local "+n);
+      //console.log("compile_refer:"+x.inspect()+" in "+e.inspect()+" results refer-local "+n);
       return return_local(n);
     }
     else if((n = free.index(x)) != null){
-      //puts("compile_refer:"+x.inspect()+" in "+e.inspect()+" results refer-free "+n);
+      //console.log("compile_refer:"+x.inspect()+" in "+e.inspect()+" results refer-free "+n);
       return return_free(n);
     }
     else{
@@ -80,7 +80,7 @@ BiwaScheme.Compiler = Class.create({
   // v: set(vars)
   // ret: set
   find_sets: function(x, v){
-    //puts("find_sets: " + to_write(x) + " " + to_write(v))
+    //console.log("find_sets: " + to_write(x) + " " + to_write(v))
     var ret=null;
     if(x instanceof BiwaScheme.Symbol){
       ret = new BiwaScheme.Set();

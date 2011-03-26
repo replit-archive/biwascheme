@@ -36,15 +36,14 @@ HTMLElement = {
 
 
 Console = {}
-Console.puts = function(str, no_newline) {
+BiwaScheme.Port.current_output = new BiwaScheme.Port.CusomOutput(function(str) {
     print(str);
-    if (!no_newline) 
-	print("\n");
-}
+});
 
 Console.p = function() {
     print.apply(this, arguments)
 }
 
 if(typeof(ev) != 'function')
-    eval("function ev(str){ puts(str); return (new BiwaScheme.Interpreter()).evaluate(str); }");
+    eval("function ev(str){ BiwaScheme.Port.current_output.put_string(str);"+
+         "return (new BiwaScheme.Interpreter()).evaluate(str); }");

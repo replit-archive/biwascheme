@@ -1,7 +1,7 @@
 //
 // test code (also used by browser_test.html)
 //
-p("BiwaScheme" + " version " + BiwaScheme.Version + ".git" + BiwaScheme.GitCommit)
+Console.p("BiwaScheme" + " version " + BiwaScheme.Version + ".git" + BiwaScheme.GitCommit);
 //p(ev("(macroexpand-1 '(define-record-type point (fields xx)))").to_write());
 //p(ev("(define-record-type point (fields xx))"));
 //p(ev("(make-point 1)"));
@@ -77,7 +77,7 @@ ev(" (define point? (record-predicate (record-type-descriptor point))) (define p
 //p(ev("((lambda (a) (lambda () a)) 10)"));
 //with(BiwaScheme){
 //  var i=new Pair(true, new Pair(1, 2));
-//  puts(to_scm(i));
+//  BiwaScheme.Port.current_output.put_string(to_scm(i));
 //}
 //p(ev("(define (len ls) (if (null? ls) 0 (+ 1 (len (cdr ls))))) (len '(1 2 3))"))
 //p(ev("(define x 1) (define (f) x) (set! x 2) (f)"))
@@ -101,7 +101,7 @@ ev(" (define point? (record-predicate (record-type-descriptor point))) (define p
 //p(ev('(+ 1 2)'));
 //p(ev('((lambda (x y) y) 99 100)'));
 //p(ev('((lambda (x y) (+ x y)) 99 100)'));
-//puts(typeof(typeof(window)));
+//BiwaScheme.Port.current_output.put_string(typeof(typeof(window)));
 //p(ev('(call/cc (lambda (cc) (display 1) (cc "Nice boat") 2))'));
 //(((lambda (f) 
 //   ((lambda (proc) (f (lambda (arg) ((proc proc) arg)))) 

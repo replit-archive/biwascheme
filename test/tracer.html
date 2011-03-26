@@ -32,14 +32,15 @@ BiwaScheme.Interpreter.dumper = dumper;
 
 function eval_it(){
   var show_error = function(e){
-    puts("Error: "+e.message);
+    BiwaScheme.Port.current_error.put_string("Error: "+e.message);
     throw e;
   };
   dumper.reset();
   $("bs-console").update("");
   var src = $("bs-input").value;
-  puts(src);
-  puts(";=> " + BiwaScheme.to_write((new BiwaScheme.Interpreter(show_error)).evaluate(src)));
+  BiwaScheme.Port.current_output.put_string(src);
+  BiwaScheme.Port.current_output.put_string(
+      ";=> " + BiwaScheme.to_write((new BiwaScheme.Interpreter(show_error)).evaluate(src)));
   dumper.dump_move(1);
 }
 </script>

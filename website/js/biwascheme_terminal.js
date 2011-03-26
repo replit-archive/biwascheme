@@ -21,10 +21,10 @@ jQuery(document).ready(function($, undefined) {
     var bscheme = new BiwaScheme.Interpreter(function(e, state) {
        term.error(e.message);
     });
-   
-    puts = function(string) {
-        term.echo(string);
-    };
+
+    BiwaScheme.Port.current_output = new BiwaScheme.Port.CusomOutput(term.echo);
+    BiwaScheme.Port.current_error = BiwaScheme.Port.current_output;
+
     var code_to_evaluate = '';
     var term = $('#term').terminal(function(command, term) {
         code_to_evaluate += ' ' + command;

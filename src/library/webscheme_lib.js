@@ -423,7 +423,8 @@ if( typeof(BiwaScheme)!='object' ) BiwaScheme={}; with(BiwaScheme) {
     throw new Error("obsolete");
   });
   define_libfunc("dom-remove-children!", 1, 1, function(ar){
-    puts("warning: dom-remove-children! is obsolete. use element-empty! instead");
+    BiwaScheme.Port.current_error.put_string(
+        "warning: dom-remove-children! is obsolete. use element-empty! instead");
     $(ar[0]).update("");
     return BiwaScheme.undef;
   });
@@ -690,7 +691,8 @@ if( typeof(BiwaScheme)!='object' ) BiwaScheme={}; with(BiwaScheme) {
           callback(transport.responseText);
         },
         onFailure: function(){
-          puts("error: failed to access " + path);
+          BiwaScheme.Port.current_error.put_string(
+              "error: failed to access " + path);
         }
       });
     },
@@ -712,8 +714,7 @@ if( typeof(BiwaScheme)!='object' ) BiwaScheme={}; with(BiwaScheme) {
     },
     assert_init: function(){
       if(!this.client_id){
-        puts("ts-init not called:"+Object.inspect(this.client_id));
-        throw new Error("ts-init not called");
+        throw new Error("ts-init not called: "+Object.inspect(this.client_id));
       }
     },
 
@@ -745,7 +746,7 @@ if( typeof(BiwaScheme)!='object' ) BiwaScheme={}; with(BiwaScheme) {
         this.too_early_tuples[ticket] = undefined;
       }
       else if(this.waiters[ticket]){
-        puts("Bug: ticket conflicted");
+        throw new Error("Bug: ticket conflicted");
       }
       else{
         this.waiters[ticket] = callback;

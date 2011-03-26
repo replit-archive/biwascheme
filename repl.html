@@ -97,11 +97,11 @@ function bs_eval(){
     biwascheme.evaluate(str, function(result){
       var after = new Date();
       $('time').innerHTML = "Time: " + (after-before)/1000 + "sec";
-      puts(BiwaScheme.to_write(result));
+      BiwaScheme.Port.current_output.put_string(BiwaScheme.to_write(result));
     });
   }
   catch(e){
-    puts(e.message);
+    BiwaScheme.Port.current_output.put_string(e.message);
     throw(e);
   }
   return false;

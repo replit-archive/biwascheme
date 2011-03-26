@@ -30,10 +30,10 @@ var dumper = new BiwaScheme.Dumper();
 BiwaScheme.Interpreter.dumper = dumper;
 
 function show_error(e){
-  puts("Error: "+e.message);
+  BiwaScheme.Port.current_error.put_string("Error: "+e.message);
 }
 function ev(str){
-  puts("ev> "+str);
+  BiwaScheme.Port.current_output.put_string("ev> "+str);
   var ret = (new BiwaScheme.Interpreter(show_error)).evaluate(str);
   dumper.dump_move(1);
   return ret;

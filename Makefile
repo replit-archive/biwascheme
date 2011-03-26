@@ -44,7 +44,10 @@ CONSOLE_FILES = \
 VERSION_FILE_IN = src/version.js.in
 VERSION_FILE    = src/version.js
 
-all: lib/biwascheme.js lib/release_biwascheme.js lib/console_biwascheme.js
+all: folder lib/biwascheme.js lib/release_biwascheme.js lib/console_biwascheme.js
+
+folder:
+	mkdir -p lib
 
 $(VERSION_FILE): $(VERSION_FILE_IN) $(RELEASE_FILES) $(CONSOLE_FILES) Makefile
 	cat $< | sed -e "s/@GIT_COMMIT@/`git log -1 --pretty=format:%H`/" | sed -e "s/@VERSION@/`cat VERSION`/" > $@

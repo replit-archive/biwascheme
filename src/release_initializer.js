@@ -68,7 +68,7 @@
 
   // Error handler (show message to console div)
   var onError = function(e, state){
-    puts(e.message); 
+    BiwaScheme.Port.current_error.put_string(e.message);
     if($("biwascheme-debugger")){
       var dumper = new BiwaScheme.Dumper($("biwascheme-debugger"));
       dumper.dump(new Hash(state));

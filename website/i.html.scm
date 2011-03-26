@@ -40,13 +40,13 @@
                 j('#ver').text(BiwaScheme.Version);
 
                 var intp = new BiwaScheme.Interpreter(function(e){
-                                                       puts(e);
+                                                       BiwaScheme.Port.current_output.put_string(e);
                                                        });
                 j('#src').change(function(){
                   j('#bs-console').empty();
                   var src = j('#src').val();
                   intp.evaluate(src, function(result){
-                                     puts(result);
+                                     BiwaScheme.Port.current_output.put_string(result);
                                      });
                 }).trigger('change');
               })")

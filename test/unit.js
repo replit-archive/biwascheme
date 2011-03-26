@@ -13,7 +13,7 @@ var on_error = function(e){
 }
 
 // test main
-function puts(){}
+BiwaScheme.Port.current_output = new BiwaScheme.Port.CusomOutput(function(){});
 function scm_eval(str, func){
   return (new BiwaScheme.Interpreter(on_error)).evaluate(str, func||new Function());
 }

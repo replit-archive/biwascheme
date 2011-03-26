@@ -84,7 +84,7 @@ var BiwaScheme = {
   require(dir+'dumper.js',     'window.BiwaScheme.Dumper', function(){
   require(dir+'io.js',            'window.JSIO', function(){
     var onError = function(e, state){
-      puts(e.message); 
+      BiwaScheme.Port.current_error.put_string(e.message);
       if($("biwascheme-debugger")){
         var dumper = new BiwaScheme.Dumper($("biwascheme-debugger"));
         dumper.dump(new Hash(state));
