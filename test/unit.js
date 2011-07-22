@@ -253,33 +253,6 @@ describe('syntaxes', {
   'begin' : function(){
     ev("((lambda (x) (begin (set! x 3) (set! x 2) (+ 1 3) x)) 1)").should_be(2);
   },
-  'simple define' : function(){
-    ev("(define x 1) x").should_be(1);
-  },
-  'multiple define' : function(){
-    ev("(define x 1) (define y 2) x").should_be(1);
-  },
-  'redefine' : function(){
-    ev("(define x 1) (define x 2) x").should_be(2);
-  },
-  'define and set!' : function(){
-    ev("(define x 1) (set! x 2) x").should_be(2);
-  },
-  'function define' : function(){
-    ev("(define f (lambda (x) (+ x 2))) (f 3)").should_be(5);
-  },
-  'function define (short style)' : function(){
-    ev("(define (f x) (+ x 2)) (f 3)").should_be(5);
-  },
-  'function define (multiple args)' : function(){
-    ev("(define (f x y) x) (f 3 4)").should_be(3);
-  },
-  'function define (optional args)' : function(){
-    ev("(define (f x y . z) z) (f 3 4 5 6)").should_be("(5 6)");
-  },
-  'function define (empty optional args)' : function(){
-    ew("(define (f x y . z) z) (f 3 4)").should_be("()");
-  },
   'lambda function (variable arguments)' : function(){
     ew("((lambda args args) 1 2)").should_be("(1 2)");
   },
@@ -331,6 +304,43 @@ describe('regexp', {
     ew('(regexp-exec "(s)d(f)" "sdf")').should_be('("sdf" "s" "f")');
   }
 })
+
+describe('11.2 Definitions', {
+  'define a variable' : function(){
+    ev("(define x 1) x").should_be(1);
+  },
+  'multiple define' : function(){
+    ev("(define x 1) (define y 2) x").should_be(1);
+  },
+  'redefine' : function(){
+    ev("(define x 1) (define x 2) x").should_be(2);
+  },
+  'define and set!' : function(){
+    ev("(define x 1) (set! x 2) x").should_be(2);
+  },
+  'define value with unspecified value' : function(){
+    ev("(define x) (set! x 2) x").should_be(2);
+  },
+  'function define' : function(){
+    ev("(define f (lambda (x) (+ x 2))) (f 3)").should_be(5);
+  },
+  'function define (short style)' : function(){
+    ev("(define (f x) (+ x 2)) (f 3)").should_be(5);
+  },
+  'function define with side effect' : function(){
+    ev("(define (f x) (set! x 5) x) (f 3)").should_be(5);
+  },
+  'function define (multiple args)' : function(){
+    ev("(define (f x y) x) (f 3 4)").should_be(3);
+  },
+  'function define (optional args)' : function(){
+    ev("(define (f x y . z) z) (f 3 4 5 6)").should_be("(5 6)");
+  },
+  'function define (empty optional args)' : function(){
+    ew("(define (f x y . z) z) (f 3 4)").should_be("()");
+  },
+})
+
 
 //r6rs base library
 //
@@ -1555,6 +1565,21 @@ describe('extra library', {
     ew("(map-with-index (lambda (i s) (list i s))" +
        "  '(a b))").should_be("((0 a) (1 b))");
   },
+
+  'list-sort/comp': function(){
+    ew("(list-sort/comp (lambda (a b) (- b a)) \
+          '(1 3 4 2 5))").should_be("(5 4 3 2 1)");
+  },
+  'vector-sort/comp': function(){
+    ew("(vector-sort/comp (lambda (a b) (- b a)) \
+          #(1 3 4 2 5))").should_be("#(5 4 3 2 1)");
+  },
+  'vector-sort/comp!': function(){
+    ew("(let1 v #(1 3 4 2 5) \
+          (vector-sort/comp! (lambda (a b) (- b a)) v) \
+          v)").should_be("#(5 4 3 2 1)");
+  },
+
   'port-closed?': function(){
     ew("(let* ((port (open-output-string)) \
                (before (port-closed? port))) \
