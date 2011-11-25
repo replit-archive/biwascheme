@@ -1,0 +1,76 @@
+TODO for BiwaScheme
+===================
+
+High priority
+-------------
+
+- LICENCE to biwascheme-min.js
+
+- [r6rs] Errors and conditions
+- [r6rs] library definition and loading
+
+- upgrade jQuery
+
+- (format)
+- (raise)
+
+- stop raising error when undefined is returned
+- list->js-array, js-array->list
+
+Middle priority
+---------------
+
+-- new syntax: ..
+
+-- reference
+
+-- better parser (for missing syntaxes)
+
+-- [r6rs-lib] immutable hashtable
+ --- should try http://www.timdown.co.uk/jshashtable/ ?
+-- [r6rs-lib] enumeration
+-- [r6rs-lib][node] Command-line access and exit values
+
+
+Low priority
+------------
+
+--- [r6rs] vector quasiquote
+--- [r6rs] case-lambda
+--- [r6rs] syntax-case, syntax-rules
+--- [r6rs] some functions for numbers
+ --- should try http://github.com/dyoo/js-numbers/ ?
+
+--- move website to Heroku?
+ --- because some tests needs server-side program
+--- use Node for unit tests
+
+Refactoring and maintenance
+---------------------------
+
+--- use underscore.uniqueId for gensym, etc.
+
+--- BiwaScheme.memoize
+    eg.
+      BiwaScheme.memoize(BiwaScheme.Enumeration.EnumType.prototype, "_universe"); 
+
+      Original function:
+        constructor: function(){
+          return function(ar){
+          };
+        }
+
+      Memoizer:
+        memoize = function(obj, name){
+          obj["compute_"+name] = obj[name];
+          obj[name] = function(/*arguments*/){
+            if(!obj.hasOwnProperty("cached_"+name)){
+              obj["cached_"+name] = obj["compute_"+name].apply(TODO, arguments);
+            }
+            return obj["cached_"+name];
+          }
+        }
+
+     File:
+       src/system/class.js?
+

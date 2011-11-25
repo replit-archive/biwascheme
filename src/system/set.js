@@ -2,7 +2,7 @@
 // Set - set of string
 // contents must be string (or at least sortable)
 //
-BiwaScheme.Set = Class.create({
+BiwaScheme.Set = BiwaScheme.Class.create({
   initialize : function(/*args*/){
     this.arr = [];
     var i;
@@ -14,8 +14,8 @@ BiwaScheme.Set = Class.create({
     if(this.arr.length != other.arr.length)
       return false;
 
-    var a1 = this.arr.clone();
-    var a2 = other.arr.clone();
+    var a1 = _.clone(this.arr);
+    var a2 = _.clone(other.arr);
     a1.sort();
     a2.sort();
     for(var i=0; i<this.arr.length; i++){
@@ -25,17 +25,17 @@ BiwaScheme.Set = Class.create({
   },
   set_cons : function(item){
     var o = new BiwaScheme.Set(item);
-    o.arr = this.arr.clone();
+    o.arr = _.clone(this.arr);
     o.arr.push(item);
     return o;
   },
   set_union : function(/*args*/){
     var o = new BiwaScheme.Set();
-    o.arr = this.arr.clone();
+    o.arr = _.clone(this.arr);
 
     for(var k=0; k<arguments.length; k++){
       var s2 = arguments[k];
-      if(!s2 instanceof BiwaScheme.Set)
+      if(!(s2 instanceof BiwaScheme.Set))
         throw new BiwaScheme.Error("set_union: arguments must be a set");
 
       for(var i=0; i<s2.arr.length; i++)
@@ -44,7 +44,7 @@ BiwaScheme.Set = Class.create({
     return o;
   },
   set_intersect : function(s2){
-    if(!s2 instanceof BiwaScheme.Set)
+    if(!(s2 instanceof BiwaScheme.Set))
       throw new BiwaScheme.Error("set_intersect: arguments must be a set");
 
     var o = new BiwaScheme.Set();
@@ -54,7 +54,7 @@ BiwaScheme.Set = Class.create({
     return o;
   },
   set_minus : function(s2){
-    if(!s2 instanceof BiwaScheme.Set)
+    if(!(s2 instanceof BiwaScheme.Set))
       throw new BiwaScheme.Error("set_minus: arguments must be a set");
 
     var o = new BiwaScheme.Set();
