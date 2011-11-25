@@ -45,8 +45,15 @@ BiwaScheme.Port.DefaultOutput = BiwaScheme.Class.extend(new BiwaScheme.Port(fals
     BiwaScheme.Port.current_output.put_string(str, true);
   }
 });
-BiwaScheme.Port.NullOutput = BiwaScheme.Class.extend()
-BiwaScheme.Port.NullInput = Class.create(BiwaScheme.Port, {
+BiwaScheme.Port.NullOutput = BiwaScheme.Class.extend(new BiwaScheme.Port(false, true), {
+  initialize: function () {
+    
+  },
+  put_string: function () {
+    
+  }
+});
+BiwaScheme.Port.NullInput = BiwaScheme.Class.create(new BiwaScheme.Port(true, false), {
   initialize: function(){
   },
   get_string: function(after){
