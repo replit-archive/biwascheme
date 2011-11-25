@@ -1,93 +1,74 @@
 #
 # Makefile - gather javascripts and compress it
 #
+VERSION_FILE_IN =  src/version.js.in
+VERSION_FILE    =  src/version.js
 
-CORE_FILES = \
-  src/stackbase.js \
-  src/system/set.js \
-  src/system/write.js \
-  src/system/pair.js \
-  src/system/value.js \
-  src/system/symbol.js \
-  src/system/char.js \
-  src/system/number.js \
-  src/system/port.js \
-  src/system/record.js \
-  src/system/hashtable.js \
-  src/system/syntax.js \
-  src/system/types.js \
-  src/system/parser.js \
-  src/system/compiler.js \
-  src/system/pause.js \
-  src/system/call.js \
-  src/system/interpreter.js \
-  src/library/infra.js \
-  src/library/r6rs_lib.js \
-  src/library/webscheme_lib.js \
-  src/library/extra_lib.js \
+BASIC_FILES =                                     \
+  src/system/class.js                             \
+  src/stackbase.js                                \
+  src/system/set.js                               \
+  src/system/write.js                             \
+  src/system/pair.js                              \
+  src/system/value.js                             \
+  src/system/symbol.js                            \
+  src/system/char.js                              \
+  src/system/number.js                            \
+  src/system/port.js                              \
+  src/system/record.js                            \
+  src/system/hashtable.js                         \
+  src/system/syntax.js                            \
+  src/system/types.js                             \
+  src/system/parser.js                            \
+  src/system/compiler.js                          \
+  src/system/pause.js                             \
+  src/system/call.js                              \
+  src/system/interpreter.js                       \
+  src/library/infra.js                            \
+  src/library/r6rs_lib.js                         \
+  src/library/js_interface.js                     \
+  src/library/extra_lib.js                        \
   src/library/srfi.js
 
-RELEASE_FILES = \
-  src/console/web-console.js \
-  src/prototype.js \
-  $(CORE_FILES) \
-  src/dumper.js \
-  src/release_initializer.js
-  #src/io.js
+BROWSER_FILES =                                   \
+  src/deps/jquery.js                              \
+  src/deps/underscore.js                          \
+  src/deps/underscore.string.js                   \
+  $(BASIC_FILES)                                  \
+  src/library/webscheme_lib.js                    \
+  src/platforms/browser/dumper.js                 \
+  src/platforms/browser/console.js                \
+  src/platforms/browser/release_initializer.js
 
-CONSOLE_FILES0 =					\
-  src/prototype.js				\
-  src/stackbase.js				\
-  src/system/set.js				\
-  src/system/write.js				\
-  src/system/pair.js				\
-  src/system/value.js				\
-  src/system/symbol.js				\
-  src/system/char.js				\
-  src/system/number.js				\
-  src/system/port.js				\
-  src/system/hashtable.js			\
-  src/system/syntax.js				\
-  src/system/types.js				\
-  src/system/parser.js				\
-  src/system/compiler.js			\
-  src/system/pause.js				\
-  src/system/call.js				\
-  src/system/interpreter.js			\
-  src/library/infra.js				\
-  src/library/r6rs_lib.js			\
-  src/library/webscheme_lib.js \
-  src/library/extra_lib.js			\
-  src/library/srfi.js				\
-  src/dumper.js					\
-  \
-  $(NULL)
+CONSOLE_FILES =                                   \
+  $(BASIC_FILES)
 
-VERSION_FILE_IN = src/version.js.in
-VERSION_FILE    = src/version.js
+all: build
 
-all: folder lib/biwascheme.js lib/release_biwascheme.js lib/console_biwascheme.js
+build: release/biwascheme.js release/biwascheme-min.js release/console_biwascheme.js node_modules/biwascheme/lib/biwascheme.js
 
-folder:
-	@mkdir -p lib
-
-build: lib/biwascheme.js lib/console_biwascheme.js bin/biwas
-
-$(VERSION_FILE): $(VERSION_FILE_IN) $(FILES0) $(CONSOLE_FILES0) VERSION Makefile
+$(VERSION_FILE): $(VERSION_FILE_IN) $(BROWSER_FILES) $(CONSOLE_FILES) VERSION Makefile
 	cat $< | sed -e "s/@GIT_COMMIT@/`git log -1 --pretty=format:%H`/" | sed -e "s/@VERSION@/`cat VERSION`/" > $@
 
-lib/biwascheme.js: $(VERSION_FILE) $(CORE_FILES)
-	cat $^ | yui-compressor --type js -o $@
+release/biwascheme.js: $(VERSION_FILE) $(BROWSER_FILES) Makefile
+	cat $(VERSION_FILE) > $@
+	cat $(BROWSER_FILES) >> $@
 	@echo "Wrote " $@
 
-lib/release_biwascheme.js: $(VERSION_FILE) $(CORE_FILES)
-	cat $^ | yui-compressor --type js -o $@
+release/biwascheme-min.js: release/biwascheme.js
+	uglifyjs -o $@ release/biwascheme.js
 	@echo "Wrote " $@
 
-bin/biwas: src/console/node-console.js lib/console_biwascheme.js src/node_main.js
-	echo '#!/usr/bin/env node' > $@
-	cat src/console/node-console.js >> $@
-	cat lib/console_biwascheme.js >> $@
-	cat src/node_main.js >> $@
-	chmod +x $@
+release/console_biwascheme.js: $(VERSION_FILE) $(CONSOLE_FILES) Makefile
+	cat $(VERSION_FILE) > $@
+	cat $(CONSOLE_FILES) >> $@
 	@echo "Wrote " $@
+
+node_modules/biwascheme/lib/biwascheme.js: src/platforms/node/module_preamble.js release/console_biwascheme.js src/platforms/node/module_postamble.js
+	cat src/platforms/node/module_preamble.js > $@
+	cat release/console_biwascheme.js >> $@
+	cat src/platforms/node/module_postamble.js >> $@
+	@echo "Wrote " $@
+
+browser_test:
+	cd test/browser_functions; node ./server.js

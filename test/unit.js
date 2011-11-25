@@ -4,6 +4,8 @@
 // This file is utf-8
 // このファイルはUTF-8です
 
+root = this;
+
 var BiwaScheme = BiwaScheme || {};
 
 BiwaScheme.register_tests = function(){
@@ -22,6 +24,15 @@ function ev(str, func){
 }
 function ew(str, func){
   return expect(BiwaScheme.to_write((new BiwaScheme.Interpreter(on_error)).evaluate(str, func||new Function())));
+}
+function should_raise_error(str){
+  var ex = null;
+  try{ scm_eval(str) } catch(e){ ex = e; }
+
+  // The exception must be BiwaScheme.Error
+  expect(ex instanceof BiwaScheme.Error).should_be(true);
+  // It must not be interpreter bug
+  expect(ex.message).should_not_match("\[BUG\]");
 }
 
 var Set = BiwaScheme.Set;
@@ -111,22 +122,43 @@ describe('utilities', {
       expect( to_display(Char.get("a")) ).should_be("a");
     }
   },
-  'Array#to_list' : function(){
-    expect( [1,2,3].to_list().to_write() ).should_be("(1 2 3)");
+  'inspect': function(){
+    with(BiwaScheme){
+      expect( inspect(undefined) ).should_be("undefined");
+      expect( inspect(null) ).should_be("null");
+      expect( inspect(true) ).should_be("#t");
+      expect( inspect(false) ).should_be("#f");
+      expect( inspect("foo") ).should_be("'foo'");
+      expect( inspect("s' d\"") ).should_be("'s\\' d\"'");
+      //expect( inspect("foo\n") ).should_be("foo\\n")
+      expect( inspect([0,0,0]) ).should_be("[0, 0, 0]");
+
+      expect( inspect(BiwaScheme.nil) ).should_be("nil");
+      expect( inspect(BiwaScheme.undef) ).should_be("#<undef>");
+      expect( inspect(new Pair(1, 2)) ).should_be("(1 . 2)");
+      expect( inspect(Sym("sym")) ).should_be("'sym");
+
+      var obj1 = {};
+      obj1.inspect = function(){ return "obj1"; };
+      expect( inspect(obj1) ).should_be("obj1");
+
+      var obj2 = {};
+      obj2.toString = function(){ return "obj2"; };
+      expect( inspect(obj2) ).should_be("obj2");
+    }
+  },
+  'array_to_list' : function(){
+    with(BiwaScheme){
+      expect( array_to_list([1,2,3]).to_write() ).should_be("(1 2 3)");
+    }
   },
   'List()' : function(){
     with(BiwaScheme){
       expect( List(1,2,3) instanceof Pair ).should_be(true);
       expect( List(1,2,3).to_write() ).should_be("(1 2 3)");
-    }
-  },
-  'build_list' : function(){
-    with(BiwaScheme){
-      expect( build_list([1,2,3]) instanceof Pair ).should_be(true);
-      expect( build_list([1,2,3]).to_write() ).should_be("(1 2 3)");
-      expect( build_list([1,2,[3,4]]).to_write() ).should_be("(1 2 (3 4))");
-      expect( build_list(
-        [Sym("define"), Sym("x"), [Sym("+"), 1, 2]]
+      expect( List(1,2,[3,4]).to_write() ).should_be("(1 2 (3 4))");
+      expect( List(
+        Sym("define"), Sym("x"), [Sym("+"), 1, 2]
       ).to_write() ).should_be("(define x (+ 1 2))");
     }
   },
@@ -153,8 +185,8 @@ describe('utilities', {
       obj.cdr = obj;
       expect( write_ss(obj) ).should_be("#0=(#0# . #0#)");
 
-      var x = [1,2,3].to_list();
-      obj = [x,x].to_list();
+      var x = List(1,2,3);
+      obj = List(x,x);
       expect( write_ss(obj) ).should_be("(#0=(1 2 3) #0#)");
 
       expect( write_ss(1) ).should_be("1");
@@ -276,15 +308,58 @@ describe('syntaxes', {
     ev("(let* ((x 1) (y x)) y)").should_be(1);
     ev("(let ((x 2) (y 3)) (let* ((x 7) (z (+ x y))) (* z x)))").should_be(70);
   },
-//  'named let' : function(){
-//    ev("(let loop ((i 0) (x 0)) (if (= i 5) x (loop (+ i 1) (- x 1))))").should_be(-5);
-//  },
-  // TODO: more test for cond
-  'cond' : function(){
-    ev("(cond ((= 1 2) #f) ((= 2 2) #t) (else '()))").should_be_true();
+  'named let' : function(){
+    ev("(let loop ((i 0) (x 0)) (if (= i 5) x (loop (+ i 1) (- x 1))))").should_be(-5);
+    ev("(let loop () 9)").should_be(9);
   },
-  'cond(else)' : function(){
+  'cond (only 1 clause)' : function(){
+    ev("(cond (1 2))").should_be(2);
+  },
+  'cond (funcall as test)' : function(){
+    ev("(cond ((= 1 1) 2))").should_be(2);
+  },
+  'cond (=>)' : function(){
+    ev("(cond ((= 1 1) => identity))").should_be(true);
+  },
+  'cond (else)' : function(){
     ew("(cond ((= 1 2) #f) ((= 2 3) #t) (else '()))").should_be("()");
+  }
+});
+
+describe('S expression comment(#;)', {
+  'simple' : function() {
+    ev("#;1 2").should_be(2);
+    ev("1 #;2").should_be(1);
+    ev("1 #;(1 2)").should_be(1);
+    ev("#;(1 2) 1").should_be(1);
+    ew("(list #;1)").should_be("()");
+  },
+  'in-list' : function() {
+    ev("'(1 #;1 2)").should_be("(1 2)");
+    ev("(list 1 #;1 3)").should_be("(1 3)");
+    ev("(+ 1 #;1 4)").should_be("5");
+  },
+  'variety of data types' : function() {
+    ev("(list 1 #;#t 2)").should_be("(1 2)");
+    ev("(list 1 #;#(1 2 3) 3)").should_be("(1 3)");
+    ev("(list 1 #;(+ 1  2) 4)").should_be("(1 4)");
+    ev("(list 1 #;(a b c) 5)").should_be("(1 5)");
+    ev("(list 1 #;a 6)").should_be("(1 6)");
+    ev("(list 1 #;2.5 #;'a 8)").should_be("(1 8)");
+    ev("(list 1 #;  \"a b c\" #;'a 9)").should_be("(1 9)");
+    ev("(list 1 #;  \"#;\" #;'a 10)").should_be("(1 10)");
+    ev("(list 1 #; a 11) ;#;").should_be("(1 11)");
+
+  },
+  'nested comments' : function() {
+    ew("(list 1 #;(#;3) 'a)").should_be("(1 a)");
+    ew("(list 1 #;#(#;3) 'b)").should_be("(1 b)");
+    ew("(list 1 #;(#;3 #;1) 'c)").should_be("(1 c)");
+    ew("(list 1 #;#(#;3 #;1) 'd)").should_be("(1 d)");
+    ew("(list 1 #;(#;3 #;1 #;2) 'a)").should_be("(1 a)");
+    ew("(list 1 #;#(#;3 #;1 #;2) 7)").should_be("(1 7)");
+    ew("(list 1 #;#(#;3 #;1 #;2 2) 8)").should_be("(1 8)");
+    ew("(list 1 #;#(#;3 #;1 #;2 2 #;(1 2 #;3)) 9)").should_be("(1 9)");
   }
 });
 
@@ -304,6 +379,8 @@ describe('regexp', {
     ew('(regexp-exec "(s)d(f)" "sdf")').should_be('("sdf" "s" "f")');
   }
 })
+
+describe(';; src/library/r6rs_lib.js', {});
 
 describe('11.2 Definitions', {
   'define a variable' : function(){
@@ -697,9 +774,15 @@ describe('11.9 Pairs and lists', {
   },
   'list-tail' : function(){
     ew("(list-tail '(a b c d) 2)").should_be("(c d)");
+
+    should_raise_error("(list-tail '(a b c d) 9)");
+    should_raise_error("(list-tail '(a b c d) -9)");
   },
   'list-ref' : function(){
     ew("(list-ref '(a b c d) 2)").should_be("c");
+
+    should_raise_error("(list-ref '(a b c d) 9)");
+    should_raise_error("(list-ref '(a b c d) -9)");
   },
   'map' : function(){
     ew("(map (lambda (x) (+ x 1)) '(1 2 3))").should_be("(2 3 4)");
@@ -858,6 +941,8 @@ describe('11.13  Vectors', {
   },
   'vector-ref' : function(){
     ev("(vector-ref '#(1 1 2 3 5 8 13 21) 5)").should_be(8)
+    should_raise_error("(vector-ref '#() 9)");
+    should_raise_error("(vector-ref '#() -9)");
   },
   'vector-set!' : function(){
     ev("(let ((a (vector 2 2 3))) (vector-set! a 0 1) a)").should_be([1,2,3])
@@ -1083,6 +1168,7 @@ describe('3 List utilities', {
   },
   'assoc' : function(){
     ew("(assoc (list 'a) '(((a)) ((b)) ((c))))").should_be("((a))");
+    ew("(assoc #f '((#t 1) (#f 2)))").should_be("(#f 2)");
   },
   'assq' : function(){
     ew("(assq 'a '((a 1) (b 2) (c 3)))").should_be("(a 1)");
@@ -1139,7 +1225,8 @@ describe('5 Control structures', {
 
 describe('6 Records', {
   // 6.2  Records: Syntactic layer
-//(define-record-type <name spec> <record clause>*)    syntax 
+
+  //(define-record-type <name spec> <record clause>*)    syntax 
   'define-record-type': function(){
     ew("(define-record-type (point new-point is-point) \
           (fields x \
@@ -1193,13 +1280,13 @@ describe('6 Records', {
                       (record-constructor-descriptor point2d))) \
         (point2d-x (make-point3d 1 2 3))").should_be(1);
   },
-//(record-type-descriptor <record name>)    syntax 
+  //(record-type-descriptor <record name>)    syntax 
   'record-type-descriptor': function(){
     ev("(define-record-type point) \
         (record-type-descriptor? \
           (record-type-descriptor point))").should_be(true);
   },
-//(record-constructor-descriptor <record name>)    syntax 
+  //(record-constructor-descriptor <record name>)    syntax 
   'record-type-descriptor': function(){
     ev("(define-record-type point) \
         (procedure? \
@@ -1493,30 +1580,13 @@ describe('19 R5RS compatibility', {
 //(scheme-report-environment n)    procedure 
 })
 
-describe('browser functions', {
-  'element-empty!' : function(){
-    scm_eval('(element-empty! ($ "div1"))');
-    expect( $("div1").innerHTML ).should_be("");
-  },
-  'element-remove!' : function(){
-    $("div1").update("<div id='div2'>foo</div>");
-    scm_eval('(element-remove! ($ "div2"))');
-    expect( $("div1").innerHTML ).should_be("");
-  },
-  'element-hide!' : function(){
-    $("div1").show();
-    scm_eval('(element-hide! ($ "div1"))');
-    expect( $("div1").visible() ).should_be(false);
-  },
-  'element-show!' : function(){
-    $("div1").hide();
-    scm_eval('(element-show! ($ "div1"))');
-    expect( $("div1").visible() ).should_be(true);
-  },
+describe(';; src/library/js_interface.js', {});
+
+describe('js interface', {
   'sleep' : function(){
     (new BiwaScheme.Interpreter).evaluate("(begin 1 (sleep 0) 2)", function(result){
       expect(result).should_be(2);
-    })
+    });
   },
   'js-call' : function() {
     ev('(js-call (js-eval "Math.pow") 2 4)').should_be(16);
@@ -1530,7 +1600,7 @@ describe('browser functions', {
       this.foo = obj["foo"];
     };
     var tmp = scm_eval('(js-new "BiwaScheme.TestForJSNew" \'foo (lambda () 4))');
-    expect(Object.isFunction(tmp.foo)).should_be(true)
+    expect(_.isFunction(tmp.foo)).should_be(true);
   },
   'js-null?' : function(){
     ev('(js-null? (js-eval "null"))').should_be(true);
@@ -1539,8 +1609,50 @@ describe('browser functions', {
   'js-undefined?' : function(){
     ev('(js-undefined? (js-eval "undefined"))').should_be(true);
     ev('(js-undefined? 0)').should_be(false);
+  },
+  'js-function?' : function(){
+    root.sample_js_function = function() { return true; };
+    ev('(js-function? (js-eval "sample_js_function"))').should_be(true);
+    ev('(js-function? (js-closure (lambda () #t)))').should_be(true);
+    ev('(js-function? (lambda () #t))').should_be(false);
+    ev('(js-function? 0)').should_be(false);
+    ev('(js-function? {})').should_be(false);
+  },
+  'alist-to-js-obj' : function(){
+    ev('(alist-to-js-obj \'()').should_be({});
+    ev('(alist-to-js-obj \'(("a" . 1) ("b" . 2)))').should_be({a: 1, b: 2});
+  },
+  'js-obj-to-alist' : function(){
+    ev('(equal? \'() (js-obj-to-alist (js-eval "{}")))').should_be(true);
+    ev('(equal? \'(("a" . 1) ("b" . 2)) (js-obj-to-alist (js-eval "var o = {a: 1, b: 2}; o;")))').should_be(true);
   }
 });
+
+describe(';; src/library/webscheme_lib.js', {});
+
+describe('browser functions', {
+  'element-empty!' : function(){
+    scm_eval('(element-empty! ($ "#div1"))');
+    expect( $("#div1").html() ).should_be("");
+  },
+  'element-remove!' : function(){
+    $("#div1").html("<div id='div2'>foo</div>");
+    scm_eval('(element-remove! ($ "#div2"))');
+    expect( $("#div1").html() ).should_be("");
+  },
+  'element-hide!' : function(){
+    $("div1").show();
+    scm_eval('(element-hide! ($ "#div1"))');
+    expect( $("#div1").is(":visible") ).should_be(false);
+  },
+  'element-show!' : function(){
+    $("div1").hide();
+    scm_eval('(element-show! ($ "#div1"))');
+    expect( $("#div1").is(":visible") ).should_be(true);
+  }
+});
+
+describe(';; src/library/extra_lib.js', {});
 
 describe('extra library', {
   'let1' : function(){
@@ -1566,6 +1678,13 @@ describe('extra library', {
        "  '(a b))").should_be("((0 a) (1 b))");
   },
 
+  'dotimes': function(){
+    ev("(dotimes (x 10 x))").should_be(10);
+    ew("(let1 ls '() \
+          (dotimes (x 3 ls) \
+            (set! ls (cons x ls))))").should_be("(2 1 0)");
+  },
+
   'list-sort/comp': function(){
     ew("(list-sort/comp (lambda (a b) (- b a)) \
           '(1 3 4 2 5))").should_be("(5 4 3 2 1)");
@@ -1588,10 +1707,17 @@ describe('extra library', {
   }
 });
 
+describe(';; src/library/srfi.js', {});
+
 describe('srfi-1 list', {
   'iota' : function(){
     ew("(iota 3)").should_be("(0 1 2)");
     ew("(iota 3 1)").should_be("(1 2 3)");
+  },
+  'list-copy': function(){
+    ew("(list-copy '(1 2 3))").should_be("(1 2 3)");
+    ev("(let1 ls '(1 2 3) \
+          (eq? ls (list-copy ls)))").should_be(false);
   }
 });
 
@@ -1643,43 +1769,6 @@ describe('srfi-30 comment syntax', {
   },
   'token in a string' : function() {
     ev("\"#| abc |#|#\"").should_be("#| abc |#|#");
-  }
-});
-
-describe('S expression comment(#;)', {
-  'simple' : function() {
-    ev("#;1 2").should_be(2);
-    ev("1 #;2").should_be(1);
-    ev("1 #;(1 2)").should_be(1);
-    ev("#;(1 2) 1").should_be(1);
-    ew("(list #;1)").should_be("()");
-  },
-  'in-list' : function() {
-    ev("'(1 #;1 2)").should_be("(1 2)");
-    ev("(list 1 #;1 3)").should_be("(1 3)");
-    ev("(+ 1 #;1 4)").should_be("5");
-  },
-  'variety of data types' : function() {
-    ev("(list 1 #;#t 2)").should_be("(1 2)");
-    ev("(list 1 #;#(1 2 3) 3)").should_be("(1 3)");
-    ev("(list 1 #;(+ 1  2) 4)").should_be("(1 4)");
-    ev("(list 1 #;(a b c) 5)").should_be("(1 5)");
-    ev("(list 1 #;a 6)").should_be("(1 6)");
-    ev("(list 1 #;2.5 #;'a 8)").should_be("(1 8)");
-    ev("(list 1 #;  \"a b c\" #;'a 9)").should_be("(1 9)");
-    ev("(list 1 #;  \"#;\" #;'a 10)").should_be("(1 10)");
-    ev("(list 1 #; a 11) ;#;").should_be("(1 11)");
-
-  },
-  'nested comments' : function() {
-    ew("(list 1 #;(#;3) 'a)").should_be("(1 a)");
-    ew("(list 1 #;#(#;3) 'b)").should_be("(1 b)");
-    ew("(list 1 #;(#;3 #;1) 'c)").should_be("(1 c)");
-    ew("(list 1 #;#(#;3 #;1) 'd)").should_be("(1 d)");
-    ew("(list 1 #;(#;3 #;1 #;2) 'a)").should_be("(1 a)");
-    ew("(list 1 #;#(#;3 #;1 #;2) 7)").should_be("(1 7)");
-    ew("(list 1 #;#(#;3 #;1 #;2 2) 8)").should_be("(1 8)");
-    ew("(list 1 #;#(#;3 #;1 #;2 2 #;(1 2 #;3)) 9)").should_be("(1 9)");
   }
 });
 

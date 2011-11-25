@@ -1,45 +1,60 @@
 //
-// Record
+// R6RS Records
+// http://www.r6rs.org/final/html/r6rs-lib/r6rs-lib-Z-H-7.html#node_chap_6
 //
-BiwaScheme.Record = Class.create({
+// Record is like struct in C, but supports more feature like inheritance.
+// see also: src/library/r6rs_lib.js
+
+//
+// Record 
+// represents each instance of record type
+//
+BiwaScheme.Record = BiwaScheme.Class.create({
   initialize: function(rtd, values){
     assert_record_td(rtd, "new Record");
 
     this.rtd = rtd;
     this.fields = values;
   },
+
   get: function(k){
     return this.fields[k]
   },
+
   set: function(k, v){
     this.fields[k] = v;
   },
+
   toString: function(){
     var contents = BiwaScheme.to_write(this.fields);
     return "#<Record "+this.rtd.name+" "+contents+">";
   }
 });
+
 BiwaScheme.isRecord = function(o){
   return (o instanceof BiwaScheme.Record);
 };
 
-// Record types
-BiwaScheme.Record._DefinedTypes = new Hash();
+// Defined record types
+BiwaScheme.Record._DefinedTypes = {};
 
 BiwaScheme.Record.define_type = function(name_str, rtd, cd){
-  return BiwaScheme.Record._DefinedTypes.set(name_str, {rtd: rtd, cd: cd});
+  return BiwaScheme.Record._DefinedTypes[name_str] = {rtd: rtd, cd: cd};
 };
 BiwaScheme.Record.get_type = function(name_str){
-  return BiwaScheme.Record._DefinedTypes.get(name_str);
+  return BiwaScheme.Record._DefinedTypes[name_str];
 };
 
-// Record type descriptor
-BiwaScheme.Record.RTD = Class.create({
+//
+// RTD (Record type descriptor)
+//
+BiwaScheme.Record.RTD = BiwaScheme.Class.create({
   //                   Symbol RTD        Symbol Bool  Bool    Array
   initialize: function(name, parent_rtd, uid, sealed, opaque, fields){
     this.name = name;
     this.parent_rtd = parent_rtd;
     this.is_base_type = !parent_rtd;
+
     if(uid){
       this.uid = uid;
       this.generative = false;
@@ -52,26 +67,48 @@ BiwaScheme.Record.RTD = Class.create({
     this.sealed = !!sealed;
     this.opaque = parent_rtd.opaque || (!!opaque);
 
-    this.fields = fields.map(function(field){
+    this.fields = _.map(fields, function(field){
       return {name: field[0], mutable: !!field[1]};
     });
   },
+
+  // Returns the name of the k-th field.
+  // Only used for error messages.
+  field_name: function(k){
+    var names = this._field_names();
+
+    for(par = this.parent_rtd; par; par = par.parent_rtd){
+      names = par._field_names() + names;
+    }
+
+    return names[k];
+  },
+  _field_names: function(){
+    return _.map(this.fields, function(spec){
+        return spec.name;
+      });
+  },
+
   _generate_new_uid: function(){
     var n = (BiwaScheme.Record.RTD.last_uid++);
     return BiwaScheme.Sym("__record_td_uid_"+n);
   },
+
   toString: function(){
     return "#<RecordTD "+name+">";
   }
 });
+
 BiwaScheme.Record.RTD.last_uid = 0;
-BiwaScheme.Record.RTD.NongenerativeRecords = new Hash();
+BiwaScheme.Record.RTD.NongenerativeRecords = {};
 BiwaScheme.isRecordTD = function(o){
   return (o instanceof BiwaScheme.Record.RTD);
 };
 
-// Record constructor descriptor
-BiwaScheme.Record.CD = Class.create({
+//
+// CD (Record constructor descriptor)
+//
+BiwaScheme.Record.CD = BiwaScheme.Class.create({
   initialize: function(rtd, parent_cd, protocol){
     this._check(rtd, parent_cd, protocol);
     this.rtd = rtd;
@@ -154,7 +191,8 @@ BiwaScheme.Record.CD = Class.create({
 
   record_constructor: function(){
     var arg_for_protocol = (this.parent_cd ? this._make_n([], this.rtd)
-                                           : this._make_p()).bind(this);
+                                           : this._make_p());
+    arg_for_protocol = _.bind(arg_for_protocol, this);
 
     return new BiwaScheme.Call(this.protocol, [arg_for_protocol], function(ar){
       var ctor = ar[0];
