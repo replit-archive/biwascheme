@@ -26,7 +26,7 @@
 //     return "bar[" + this.b + "]";
 //   }
 // });
-
+var BiwaScheme = BiwaScheme || {};
 BiwaScheme.Class = {
   create: function(methods) {
     var klass = function(){ this.initialize.apply(this, arguments); };
