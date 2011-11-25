@@ -31,7 +31,7 @@ BiwaScheme.Port.BrowserInput = BiwaScheme.Class.extend(new BiwaScheme.Port(true,
       form.submit(function(){
         var input = $("#webscheme-read-line").val();
         form.remove();
-        puts(input);
+        BiwaScheme.Port.current_output.put_string(input);
         pause.resume(after(input));
         return false;
       });
@@ -42,12 +42,12 @@ BiwaScheme.Port.DefaultOutput = BiwaScheme.Class.extend(new BiwaScheme.Port(fals
   initialize: function(){
   },
   put_string: function(str){
-    puts(str, true);
+    BiwaScheme.Port.current_output.put_string(str, true);
   }
 });
+BiwaScheme.Port.NullOutput = BiwaScheme.Class.extend()
 BiwaScheme.Port.NullInput = Class.create(BiwaScheme.Port, {
-  initialize: function($super){
-    $super(true, false);
+  initialize: function(){
   },
   get_string: function(after){
     // Never give them anything!
@@ -55,18 +55,16 @@ BiwaScheme.Port.NullInput = Class.create(BiwaScheme.Port, {
   }
 });
 
-BiwaScheme.Port.CustomOutput = Class.create(BiwaScheme.Port, {
-  initialize: function($super, output_function){
-    $super(false, true);
+BiwaScheme.Port.CustomOutput = BiwaScheme.Class.create(new BiwaScheme.Port(false, true), {
+  initialize: function(output_function){
     this.output_function = output_function;
   },
   put_string: function(str){
     this.output_function(str);
   }
 });
-BiwaScheme.Port.CustomInput = Class.create(BiwaScheme.Port, {
-  initialize: function($super, input_function){
-    $super(true, false);
+BiwaScheme.Port.CustomInput = BiwaScheme.Class.create(new BiwaScheme.Port(true, false), {
+  initialize: function(input_function){
     this.input_function = input_function;
   },
   get_string: function(after){
