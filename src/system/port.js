@@ -53,7 +53,7 @@ BiwaScheme.Port.NullOutput = BiwaScheme.Class.extend(new BiwaScheme.Port(false, 
     
   }
 });
-BiwaScheme.Port.NullInput = BiwaScheme.Class.create(new BiwaScheme.Port(true, false), {
+BiwaScheme.Port.NullInput = BiwaScheme.Class.extend(new BiwaScheme.Port(true, false), {
   initialize: function(){
   },
   get_string: function(after){
@@ -62,7 +62,7 @@ BiwaScheme.Port.NullInput = BiwaScheme.Class.create(new BiwaScheme.Port(true, fa
   }
 });
 
-BiwaScheme.Port.CustomOutput = BiwaScheme.Class.create(new BiwaScheme.Port(false, true), {
+BiwaScheme.Port.CustomOutput = BiwaScheme.Class.extend(new BiwaScheme.Port(false, true), {
   initialize: function(output_function){
     this.output_function = output_function;
   },
@@ -70,7 +70,7 @@ BiwaScheme.Port.CustomOutput = BiwaScheme.Class.create(new BiwaScheme.Port(false
     this.output_function(str);
   }
 });
-BiwaScheme.Port.CustomInput = BiwaScheme.Class.create(new BiwaScheme.Port(true, false), {
+BiwaScheme.Port.CustomInput = BiwaScheme.Class.extend(new BiwaScheme.Port(true, false), {
   initialize: function(input_function){
     this.input_function = input_function;
   },
